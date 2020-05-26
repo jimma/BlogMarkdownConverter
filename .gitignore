@@ -20,8 +20,8 @@ Session.vim
 tags
 
 *.exe
-b2m
-b2m.test
+#b2m
+#b2m.test
 
 .idea/
 *.iml

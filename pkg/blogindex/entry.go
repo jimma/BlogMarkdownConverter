@@ -2,6 +2,7 @@ package blogindex
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -28,12 +29,15 @@ type Blog struct {
 }
 
 const (
-	BlogIndexPath  string = "/html/body/div/section/div/div/div/div/section/header/div/h1/a"
-	BlogTitleXPath string = "/html/body/div/section/div/div/div/div/div/header/div/h1/a"
+	//BlogIndexPath  string = "/html/body/div/section/div/div/div/div/section/header/div/h1/a"
+	BlogIndexPath string = "/html/body/div/div/div/div/div/div/div/div/div/div/div/div/div/div/div/div/div/div/h3/a"
+	//BlogTitleXPath string = "/html/body/div/section/div/div/div/div/div/header/div/h1/a"
+	BlogTitleXPath string = "/html/body/div/div/div/div/div/div/div/div/div/div/div/div/div/div/div/div/div/div/h3"
 
-	BlogAuthorXPath  string = "/html/body/div/section/div/div/div/div/div/header/div/span/a[1]"
-	BlogDataXPath    string = "/html/body/div/section/div/div/div/div/div/header/div/span/text()[3]"
-	BlogContentXpath string = "/html/body/div/section/div/div/div/div/div/section"
+	BlogAuthorXPath string = "/html/body/div/section/div/div/div/div/div/header/div/span/a[1]"
+	//BlogDataXPath    string = "/html/body/div/section/div/div/div/div/div/header/div/span/text()[3]"
+	BlogDataXPath    string = "/html/body/div/div/div/div/div/div/div/div/div/div[1]/div/div/div/div/div/div/div/div/div/div/span/a/abbr/text()"
+	BlogContentXpath string = "/html/body/div[3]/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[4]/div[1]/div/div/div[1]/div[1]/div/div/div/div[1]/div[2]"
 )
 
 func (blogIndex *BlogIndex) Parse() ([]string, error) {
@@ -49,7 +53,9 @@ func (blogIndex *BlogIndex) Parse() ([]string, error) {
 	}
 	var res []string
 	for _, node := range nodes {
-		res = append(res, node.Attr[0].Val)
+		str := node.Attr[0].Val
+		res = append(res, str)
+		fmt.Println(res)
 
 	}
 	blogIndex.Entries = res
@@ -89,19 +95,20 @@ func (blog *Blog) GetBlogContet() error {
 	if err != nil {
 		return err
 	}
-	blog.Title = titleNodes[0].FirstChild.Data
+	titleStr := titleNodes[0].FirstChild.Data
+	blog.Title = strings.ReplaceAll(titleStr, "\n", "")
 
 	dataNode, err := htmlquery.QueryAll(doc, BlogDataXPath)
 	if err != nil {
 		return err
 	}
-	blog.Date = formateData(dataNode[0].Data)
+	blog.Date = dataNode[0].Data
 
-	authorNode, err := htmlquery.QueryAll(doc, BlogAuthorXPath)
-	if err != nil {
-		return err
-	}
-	blog.Author = authorNode[0].FirstChild.Data
+	//authorNode, err := htmlquery.QueryAll(doc, BlogAuthorXPath)
+	//if err != nil {
+	//	return err
+	//}
+	blog.Author = "JBossWS Team"
 	contentNode, err := htmlquery.QueryAll(doc, BlogContentXpath)
 	if err != nil {
 		return err
@@ -114,7 +121,9 @@ func (blog *Blog) GetBlogContet() error {
 	buf.WriteString("date:       " + blog.Date + "\n")
 	buf.WriteString("author:     " + blog.Author + "\n")
 	buf.WriteString("---\n")
-	md := html2md.Convert(printNode(contentNode[0]))
+	str := printNode(contentNode[0])
+	fmt.Println("***** : " + str)
+	md := html2md.Convert(str)
 	blog.Content = buf.String() + md
 	return nil
 }
@@ -122,8 +131,11 @@ func (blog *Blog) GetBlogContet() error {
 func convetToFileName(url string) string {
 	a := []rune(url)
 	length := len(url)
-	res := string(a[52:length])
+	res := string(a[29:36])
 	res = strings.ReplaceAll(res, "/", "-")
+	res = res + "-01-" + string(a[37:length-5])
+	res = strings.ReplaceAll(res, "/", "-")
+
 	return res
 }
 func formateData(data string) string {
